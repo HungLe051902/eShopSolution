@@ -5,17 +5,6 @@ using System.Text;
 
 namespace eShopSolution.Data.Entities
 {
-    class Order
-    {
-    }
-}
-using eShopSolution.Data.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace eShopSolution.Data.Entities
-{
     public class Order
     {
         public int Id { set; get; }
