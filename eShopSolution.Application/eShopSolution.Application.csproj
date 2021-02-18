@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Catalog\Products\" />
+    <ProjectReference Include="..\eShopSolution.Data\eShopSolution.Data.csproj" />
   </ItemGroup>
 
 </Project>
