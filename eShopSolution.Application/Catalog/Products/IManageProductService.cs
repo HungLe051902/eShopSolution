@@ -1,4 +1,5 @@
 ﻿using eShopSolution.Application.Catalog.Products.Dtos;
+using eShopSolution.Application.Catalog.Products.Dtos.Manage;
 using eShopSolution.Application.Dtos;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,12 @@ namespace eShopSolution.Application.Catalog.Products
         Task<int> Update(ProductUpdateRequest request);
 
         Task<int> Delete(int productId);
+
+        Task<bool> UpdatePrice(int productId, decimal newPrice);
+
+        Task AddViewcount(int productId);
+
+        Task<bool> UpdateStock(int productId, int addedQuantity);
 
         Task<List<ProductViewModel>> GetAll();
 
