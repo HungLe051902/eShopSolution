@@ -11,15 +11,24 @@ using System.Linq;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
+using System.IO;
+using eShopSolution.Application.Common;
 
 namespace eShopSolution.Application.Catalog.Products
 {
     public class ManageProductService : IManageProductService
     {
         private readonly EShopDbContext _context;
-        public ManageProductService(EShopDbContext context)
+        private readonly IStorageService _storageService;
+        public ManageProductService(EShopDbContext context, IStorageService storageService)
         {
             _context = context;
+            _storageService = storageService;
+        }
+
+        public Task<int> AddImages(int productId, List<IFormFile> files)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task AddViewcount(int productId)
@@ -76,6 +85,14 @@ namespace eShopSolution.Application.Catalog.Products
         {
             var product = await _context.Products.FindAsync(productId);
             if (product == null) throw new EShopException($"Cannot find a product: {productId}");
+
+            var images = _context.ProductImages.Where(i => i.ProductId == productId);
+            
+            foreach(var image in images)
+            {
+                await _storageService.DeleteFileAsync(image.ImagePath);
+            }
+
             _context.Products.Remove(product);
             return await _context.SaveChangesAsync();
         }
@@ -124,6 +141,15 @@ namespace eShopSolution.Application.Catalog.Products
             return pagedResult;
         }
 
+        public Task<List<ProductImageViewModel>> GetListImage(int productId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> RemoveImages(int imageId)
+        {
+            throw new NotImplementedException();
+        }
 
         public async Task<int> Update(ProductUpdateRequest request)
         {
@@ -138,7 +164,25 @@ namespace eShopSolution.Application.Catalog.Products
             productTranslations.SeoTitle = request.SeoTitle;
             productTranslations.Description = request.Description;
             productTranslations.Details = request.Details;
+
+            // Save image
+            if (request.ThumbnailImage != null)
+            {
+                var thumbnailImage = await _context.ProductImages.FirstOrDefaultAsync(i => i.IsDefault == true && i.ProductId == request.Id);
+                if (thumbnailImage != null)
+                {
+                    thumbnailImage.FileSize = request.ThumbnailImage.Length;
+                    thumbnailImage.ImagePath = await this.SaveFile(request.ThumbnailImage);
+                    _context.ProductImages.Update(thumbnailImage);
+                }
+            }
+
             return await _context.SaveChangesAsync();
+        }
+
+        public Task<int> UpdateImage(int imageId, string caption, bool IsDefault)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<bool> UpdatePrice(int productId, decimal newPrice)
@@ -159,7 +203,7 @@ namespace eShopSolution.Application.Catalog.Products
 
         private async Task<string> SaveFile(IFormFile file)
         {
-            var originalFileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName;
+            var originalFileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
             var fileName = $"{Guid.NewGuid()}{Path.GetExtension(originalFileName)}";
             await _storageService.SaveFileAsync(file.OpenReadStream(), fileName);
             return fileName;
