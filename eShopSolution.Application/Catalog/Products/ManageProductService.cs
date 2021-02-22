@@ -3,7 +3,6 @@ using eShopSolution.Data.Entities;
 using eShopSolution.Utilities.Exceptions;
 using eShopSolution.ViewModels.Catalog.Products;
 using eShopSolution.ViewModels.Common;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,9 +24,10 @@ namespace eShopSolution.Application.Catalog.Products
             _storageService = storageService;
         }
 
-        public Task<int> AddImages(int productId, List<IFormFile> files)
+        public async Task<int> AddImages(int productId, List<IFormFile> files)
         {
-            throw new NotImplementedException();
+            var product = await _context.Products.FindAsync(productId);
+            return product;
         }
 
         public async Task AddViewcount(int productId)
@@ -77,7 +77,8 @@ namespace eShopSolution.Application.Catalog.Products
                 };
             }
             _context.Products.Add(product);
-            return await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
+            return product.Id;
         }
 
         public async Task<int> Delete(int productId)
@@ -138,6 +139,11 @@ namespace eShopSolution.Application.Catalog.Products
                 Items = data,
             };
             return pagedResult;
+        }
+
+        public Task<ProductViewModel> GetById(int productId)
+        {
+            throw new NotImplementedException();
         }
 
         public Task<List<ProductImageViewModel>> GetListImage(int productId)
