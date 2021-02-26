@@ -45,10 +45,65 @@ namespace eShopSolution.BackendAPI
             services.AddTransient<SignInManager<AppUser>, SignInManager<AppUser>>();
             services.AddTransient<RoleManager<AppRole>, RoleManager<AppRole>>();
             services.AddTransient<IUserService, UserService>();
-            
-            services.AddControllersWithViews();
 
-            services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo { Title = "Swagger Movies Demo", Version = "v1" }); });
+            services.AddControllers();
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Swagger Movies Demo", Version = "v1" });
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = @"JWT Authorization header using the Bearer scheme. \r\n\r\n",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            },
+                            Scheme = "oauth2",
+                            Name = "Bearer",
+                            In = ParameterLocation.Header,
+                        },
+                        new List<string>()
+                    }
+                });
+            });
+
+            string issuer = Configuration.GetValue<string>("Tokens:Issuer");
+            string signingKey = Configuration.GetValue<string>("Tokens:Key");
+            byte[] signingKeyBytes = System.Text.Encoding.UTF8.GetBytes(signingKey);
+
+            services.AddAuthentication(opt =>
+            {
+                opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = issuer,
+                    ValidateAudience = true,
+                    ValidateLifetime = true, 
+                    ValidateIssuerSigningKey = true, 
+                    ClockSkew = System.TimeSpan.Zero,
+                    IssuerSigningKey = new SymmetricSecurityKey(signingKeyBytes)
+                };
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -66,6 +121,8 @@ namespace eShopSolution.BackendAPI
             }
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+
+            app.UseAuthentication();
 
             app.UseRouting();
 
